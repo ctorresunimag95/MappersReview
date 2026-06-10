@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="MappersComparasion.Shared/MappersComparasion.Shared.csproj" />
+  <Project Path="MappersComparasion/MappersComparasion.csproj" />
+  <Project Path="MappersComparasion.DI/MappersComparasion.DI.csproj" />
+</Solution>
