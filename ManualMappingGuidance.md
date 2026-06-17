@@ -32,6 +32,11 @@ If a destination value requires a *decision* or a *calculation*, compute it upst
 in — keep the mapper a flat, readable list of assignments. This makes mappers trivial to read,
 diff, and verify against the two class definitions.
 
+Injecting a service into a mapper is acceptable only for trivial, lossless translation support:
+formatting a value for display, delegating to a child mapper, or reading a deterministic helper
+such as a clock abstraction. If the service call applies domain rules, performs I/O, or computes a
+business decision, that logic belongs upstream in the service or domain layer.
+
 ---
 
 ## The two supported shapes
