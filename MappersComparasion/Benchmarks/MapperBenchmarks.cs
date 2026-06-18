@@ -1,4 +1,4 @@
-// using AutoMapper;
+using AutoMapper;
 using BenchmarkDotNet.Attributes;
 using Mapster;
 using MappersComparasion.Mappers;
@@ -11,7 +11,7 @@ public class MapperBenchmarks
 {
     private List<User> _users = null!;
     private MapperlyUserMapper _mapperly = null!;
-    // private IMapper _autoMapper = null!;
+    private IMapper _autoMapper = null!;
 
     [Params(1, 100, 1000)]
     public int Count { get; set; }
@@ -33,7 +33,7 @@ public class MapperBenchmarks
         TypeAdapterConfig<User, UserDto>.NewConfig()
             .Map(d => d.City, s => s.Address.City);
 
-        // _autoMapper = new MapperConfiguration(cfg => cfg.AddProfile<UserMappingProfile>()).CreateMapper();
+        _autoMapper = new MapperConfiguration(cfg => cfg.AddProfile<UserMappingProfile>()).CreateMapper();
     }
 
     [Benchmark(Baseline = true)]
@@ -44,9 +44,9 @@ public class MapperBenchmarks
     public List<UserDto> Mapster()
         => _users.Adapt<List<UserDto>>();
 
-    // [Benchmark]
-    // public List<UserDto> AutoMapper()
-    //     => _autoMapper.Map<List<UserDto>>(_users);
+    [Benchmark]
+    public List<UserDto> AutoMapper()
+        => _autoMapper.Map<List<UserDto>>(_users);
 
     [Benchmark]
     public List<UserDto> Mapperly()
