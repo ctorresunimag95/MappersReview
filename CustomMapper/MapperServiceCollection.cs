@@ -4,16 +4,20 @@ namespace CustomMapper;
 
 public static class MapperServiceCollection
 {
-    public static IServiceCollection AddMappers<TAssemblyMarker>(this IServiceCollection services
-        , ServiceLifetime serviceLifetime = ServiceLifetime.Scoped)
+    public static IServiceCollection AddMappers<TAssemblyMarker>(this IServiceCollection services,
+        ServiceLifetime serviceLifetime = ServiceLifetime.Scoped)
     {
-        services.Scan(scan => scan.FromAssembliesOf(typeof(TAssemblyMarker))
+        foreach (var type in typeof(TAssemblyMarker).Assembly.GetTypes())
+        {
+            if (type is not { IsClass: true, IsAbstract: false })
+                continue;
 
-            .AddClasses(classes => classes
-                .AssignableTo(typeof(IMapperProfile<,>)), publicOnly: false)
-            .AsImplementedInterfaces()
-            .WithLifetime(serviceLifetime)
-        );
+            foreach (var i in type.GetInterfaces())
+            {
+                if (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMapperProfile<,>))
+                    services.Add(new ServiceDescriptor(i, type, serviceLifetime));
+            }
+        }
 
         services.AddTransient<IMapper, Mapper>();
 

@@ -45,7 +45,7 @@ However, AutoMapper has recently announced a transition toward a **commercial/pa
 | **Continue with AutoMapper** | Keep the existing dependency and accept the performance, licensing, and maintenance trade-offs. |
 | **Mapster** | Runtime IL-emit library with an `IMapper`-compatible interface and lowest single-object allocation in the benchmark. |
 | **Mapperly** | Compile-time source generator; no runtime dependency, compile-time mapping validation, performance statistically equal to manual. |
-| **Manual mapping + Custom wrapper** | Handwritten assignments behind a thin `IMapper` / `IMapperProfile<TSource, TDestination>` abstraction with DI auto-registration via Scrutor. |
+| **Manual mapping + Custom wrapper** | Handwritten assignments behind a thin `IMapper` / `IMapperProfile<TSource, TDestination>` abstraction with DI auto-registration via manual assembly discovery. |
 
 ### AutoMapper
 
@@ -75,10 +75,10 @@ However, AutoMapper has recently announced a transition toward a **commercial/pa
 ### Manual Mapping + Custom Wrapper
 
 - Performance baseline: all other projection approaches are measured against it.
-- Fully owned internally; no external dependencies beyond `Microsoft.Extensions.DependencyInjection` and Scrutor (assembly scanning).
+- Fully owned internally; no external dependencies beyond `Microsoft.Extensions.DependencyInjection`.
 - The `IMapperProfile<TSource, TDestination>` contract makes each mapping a plain, testable C# class.
 - The `IMapper.Map<TSource, TDestination>` surface mirrors the AutoMapper API, reducing migration friction.
-- Auto-registration via `AddMappers<TAssemblyMarker>()` scans an assembly for all `IMapperProfile<,>` implementations and registers them without manual wiring.
+- Auto-registration via `AddMappers<TAssemblyMarker>()` uses manual assembly discovery (`typeof(TAssemblyMarker).Assembly.GetTypes()`) to locate all `IMapperProfile<,>` implementations and registers them without manual wiring.
 - Mapping code is fully debuggable: a developer can step from the call site into the exact assignments.
 
 ---
@@ -87,9 +87,9 @@ However, AutoMapper has recently announced a transition toward a **commercial/pa
 
 **Chosen option: Manual Mapping with the Custom Mapper wrapper.**
 
-The custom mapper library provides a thin, DI-friendly abstraction layer over plain handwritten mapping code. It exposes an `IMapper` interface that mirrors the familiar AutoMapper contract, backed by strongly-typed `IMapperProfile<TSource, TDestination>` implementations that are auto-discovered and registered through Scrutor's assembly scanning. Each profile is a regular C# class containing explicit property assignments — no reflection at runtime, no code generation tooling at build time, and no third-party library in the critical mapping path.
+The custom mapper library provides a thin, DI-friendly abstraction layer over plain handwritten mapping code. It exposes an `IMapper` interface that mirrors the familiar AutoMapper contract, backed by strongly-typed `IMapperProfile<TSource, TDestination>` implementations that are auto-discovered and registered through standard reflection (`Assembly.GetTypes()`). Each profile is a regular C# class containing explicit property assignments — no reflection at runtime, no code generation tooling at build time, and no third-party library in the critical mapping path.
 
-This approach achieves performance at the manual baseline (the top tier in the benchmark), eliminates external library risk from the mapping layer, and keeps every mapping behaviour fully visible, debuggable, and refactor-friendly. The `AddMappers<TAssemblyMarker>()` extension method reduces registration boilerplate to a single line, and the familiar `IMapper.Map<TSource, TDestination>()` call site minimises the surface change for teams migrating from AutoMapper.
+This approach achieves performance at the manual baseline (the top tier in the benchmark), eliminates external library risk from the mapping layer, and keeps every mapping behaviour fully visible, debuggable, and refactor-friendly. The `AddMappers<TAssemblyMarker>()` extension method reduces registration boilerplate to a single line using standard reflection (`Assembly.GetTypes()`) with no third-party scanning dependency, and the familiar `IMapper.Map<TSource, TDestination>()` call site minimises the surface change for teams migrating from AutoMapper.
 
 For collection mapping, the wrapper intentionally keeps the core API object-oriented rather than adding a bulk-mapping abstraction. Small collections can be mapped with LINQ over `IMapper`, but large or performance-sensitive loops should inject the concrete `IMapperProfile<TSource, TDestination>` directly to avoid per-item scope creation overhead.
 
@@ -105,12 +105,7 @@ For collection mapping, the wrapper intentionally keeps the core API object-orie
 
 - Mapping code is handwritten: larger or more complex domain models require proportionally more code.
 - No automatic convention-based mapping: every property must be mapped explicitly (mitigated by AI-assisted generation tooling — see `ManualMappingGuidance.md`).
-- Scrutor is an additional dependency for assembly scanning (lightweight, widely adopted, MIT-licensed).
-
-### Dependency Mitigation Notes
-
-- Scrutor should be treated like any other shared architectural dependency: include it in normal security, support, and upgrade review.
-- If Scrutor's maintenance or compatibility posture changes, the fallback is straightforward: register each `IMapperProfile<,>` manually in DI and retain the rest of the custom mapper design unchanged or apply alternative assembly scanning.
+- No additional dependencies beyond `Microsoft.Extensions.DependencyInjection`; assembly scanning is implemented with standard BCL reflection.
 
 ---
 
@@ -152,9 +147,9 @@ The following diagram illustrates how the custom mapper components interact at r
   │                                                             │
   │  services.AddMappers<Program>()                             │
   │       │                                                     │
-  │       ├─ Scrutor scans assembly of TAssemblyMarker          │
-  │       │   → discovers all IMapperProfile<,> implementations │
-  │       │   → registers each as its interface                 │
+  │       ├─ Assembly.GetTypes() scans assembly of TAssemblyMarker │
+  │       │   → discovers all IMapperProfile<,> implementations    │
+  │       │   → registers each as its interface                    │
   │       │                                                     │
   │       └─ registers IMapper → Mapper (Transient)             │
   └─────────────────────────────────────────────────────────────┘

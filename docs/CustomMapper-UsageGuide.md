@@ -38,7 +38,7 @@ builder.Services.AddMappers<Program>();
 ```
 
 This single call:
-- Scans the assembly for every class that implements `IMapperProfile<,>`.
+- Uses `typeof(TAssemblyMarker).Assembly.GetTypes()` to find every class that implements `IMapperProfile<,>`.
 - Registers each profile against its interface with `Scoped` lifetime (configurable).
 - Registers `IMapper` itself as `Transient`.
 
@@ -185,7 +185,7 @@ Assembly contains profile classes
 
 Startup
     services.AddMappers<Program>()
-         └─ Scrutor discovers and registers all IMapperProfile<,> classes
+         └─ Assembly.GetTypes() discovers and registers all IMapperProfile<,> classes
          └─ Registers IMapper → Mapper (Transient)
 
 Runtime

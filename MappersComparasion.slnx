@@ -3,4 +3,7 @@
   <Project Path="MappersComparasion/MappersComparasion.csproj" />
   <Project Path="CustomMapper/CustomMapper.csproj" />
   <Project Path="MappersComparasion.DI/MappersComparasion.DI.csproj" />
+  <Project Path="CustomMapper.SourceGenerator.Tests/CustomMapper.SourceGenerator.Tests.csproj" />
+  <Project Path="CustomMapper.SourceGenerator/CustomMapper.SourceGenerator.csproj" />
+  <Project Path="CustomMapper.SourceGenerator.Sample/CustomMapper.SourceGenerator.Sample.csproj" />
 </Solution>

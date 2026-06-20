@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <!-- Release tracking (RS2008) is unnecessary for an in-repo, non-shipped analyzer package -->
+    <NoWarn>$(NoWarn);RS2008</NoWarn>
+
+    <!-- Ship runtime contracts in lib/ AND keep Roslyn out of the consumer's runtime closure -->
+    <IncludeBuildOutput>true</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+
+    <!-- Packaging metadata -->
+    <PackageId>CustomMapper.SourceGenerator</PackageId>
+    <Description>A standalone source-generated mapper. Author a partial [Mapper] class and get injectable, compile-time mapping implementations.</Description>
+    <IncludeSymbols>false</IncludeSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 4.14.x matches the Roslyn shipped with the .NET 10 SDK; PrivateAssets=all = compile-only -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Pack the same DLL into the analyzer path so the compiler loads the generator -->
+  <ItemGroup>
+    <None Include="$(OutputPath)\$(AssemblyName).dll"
+          Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
+</Project>

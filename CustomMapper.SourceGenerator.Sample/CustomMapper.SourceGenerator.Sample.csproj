@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!-- Inspect emitted files under obj/.../generated/CustomMapper.SourceGenerator/ -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Acts as both the analyzer (generator) and a normal reference (runtime contracts). -->
+    <ProjectReference Include="..\CustomMapper.SourceGenerator\CustomMapper.SourceGenerator.csproj"
+                      OutputItemType="Analyzer" />
+  </ItemGroup>
+
+</Project>
