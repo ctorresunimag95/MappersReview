@@ -59,6 +59,35 @@ using (var provider = transientServices.BuildServiceProvider())
     Require(!ReferenceEquals(a, b), "Transient lifetime yields distinct instances");
 }
 
+Console.WriteLine("Lifetime override test passed.");
+Console.WriteLine("< ------------------------------------------->\n");
+
+// OrderLine Mappings
+var orderLine = new OrderLine { ProductId = 7, UnitPrice = 19.99m };
+using (var provider = services.BuildServiceProvider())
+{
+    var mapper = provider.GetRequiredService<IMapper>();
+    var dto = mapper.Map<OrderLine, OrderLineDto>(orderLine);
+
+    Console.WriteLine($"Mapped OrderLine: ProductId={dto.ProductId}, UnitPrice={dto.UnitPrice}");
+    Require(dto.ProductId == orderLine.ProductId, "OrderLine ProductId copied");
+    Require(dto.UnitPrice == orderLine.UnitPrice, "OrderLine UnitPrice copied");
+}
+
+Console.WriteLine("< ------------------------------------------->\n");
+
+// Address Mappings
+var address = new Address { Street = "123 Main St", City = "Anytown", Zip = "12345" };
+using (var provider = services.BuildServiceProvider())
+{
+    var mapper = provider.GetRequiredService<IMapper>();
+    var dto = mapper.Map<Address, AddressDto>(address);
+    Console.WriteLine($"Mapped Address: Street={dto.Street}, City={dto.City}, Zip={dto.Zip}");
+    Require(dto.Street == address.Street, "Address Street copied");
+    Require(dto.City == address.City, "Address City copied");
+    Require(dto.Zip == address.Zip, "Address Zip copied");
+}
+
 Console.WriteLine("All checks passed.");
 
 static void Require(bool condition, string label)

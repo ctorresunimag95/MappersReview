@@ -9,22 +9,50 @@ namespace CustomMapper.SourceGenerator.Generator
     /// </summary>
     internal readonly struct PropertyAssignment : IEquatable<PropertyAssignment>
     {
-        public PropertyAssignment(string destinationProperty, string sourceProperty)
+        public PropertyAssignment(string destinationProperty, string sourceProperty, bool isInitOnly)
         {
             DestinationProperty = destinationProperty;
             SourceProperty = sourceProperty;
+            IsInitOnly = isInitOnly;
         }
 
         public string DestinationProperty { get; }
         public string SourceProperty { get; }
+        public bool IsInitOnly { get; }
 
         public bool Equals(PropertyAssignment other) =>
-            DestinationProperty == other.DestinationProperty && SourceProperty == other.SourceProperty;
+            DestinationProperty == other.DestinationProperty
+            && SourceProperty == other.SourceProperty
+            && IsInitOnly == other.IsInitOnly;
 
         public override bool Equals(object? obj) => obj is PropertyAssignment other && Equals(other);
 
         public override int GetHashCode() =>
-            unchecked((DestinationProperty.GetHashCode() * 397) ^ SourceProperty.GetHashCode());
+            unchecked(((DestinationProperty.GetHashCode() * 397) ^ SourceProperty.GetHashCode()) * 397
+                      ^ IsInitOnly.GetHashCode());
+    }
+
+    /// <summary>
+    /// A constructor parameter binding to a source property during constructor-mode mapping.
+    /// </summary>
+    internal readonly struct ConstructorParameterBinding : IEquatable<ConstructorParameterBinding>
+    {
+        public ConstructorParameterBinding(string parameterName, string sourceProperty)
+        {
+            ParameterName = parameterName;
+            SourceProperty = sourceProperty;
+        }
+
+        public string ParameterName { get; }
+        public string SourceProperty { get; }
+
+        public bool Equals(ConstructorParameterBinding other) =>
+            ParameterName == other.ParameterName && SourceProperty == other.SourceProperty;
+
+        public override bool Equals(object? obj) => obj is ConstructorParameterBinding other && Equals(other);
+
+        public override int GetHashCode() =>
+            unchecked((ParameterName.GetHashCode() * 397) ^ SourceProperty.GetHashCode());
     }
 
     /// <summary>
@@ -38,13 +66,19 @@ namespace CustomMapper.SourceGenerator.Generator
             string sourceTypeGlobal,
             string destinationTypeGlobal,
             bool hasExtendMap,
-            EquatableArray<PropertyAssignment> assignments)
+            EquatableArray<PropertyAssignment> assignments,
+            bool useConstructor,
+            EquatableArray<ConstructorParameterBinding> ctorBindings,
+            EquatableArray<PropertyAssignment> postCtorAssignments)
         {
             MethodName = methodName;
             SourceTypeGlobal = sourceTypeGlobal;
             DestinationTypeGlobal = destinationTypeGlobal;
             HasExtendMap = hasExtendMap;
             Assignments = assignments;
+            UseConstructor = useConstructor;
+            CtorBindings = ctorBindings;
+            PostCtorAssignments = postCtorAssignments;
         }
 
         public string MethodName { get; }
@@ -52,6 +86,9 @@ namespace CustomMapper.SourceGenerator.Generator
         public string DestinationTypeGlobal { get; }
         public bool HasExtendMap { get; }
         public EquatableArray<PropertyAssignment> Assignments { get; }
+        public bool UseConstructor { get; }
+        public EquatableArray<ConstructorParameterBinding> CtorBindings { get; }
+        public EquatableArray<PropertyAssignment> PostCtorAssignments { get; }
 
         public bool Equals(MapMethodModel? other)
         {
@@ -60,7 +97,10 @@ namespace CustomMapper.SourceGenerator.Generator
                 && SourceTypeGlobal == other.SourceTypeGlobal
                 && DestinationTypeGlobal == other.DestinationTypeGlobal
                 && HasExtendMap == other.HasExtendMap
-                && Assignments.Equals(other.Assignments);
+                && Assignments.Equals(other.Assignments)
+                && UseConstructor == other.UseConstructor
+                && CtorBindings.Equals(other.CtorBindings)
+                && PostCtorAssignments.Equals(other.PostCtorAssignments);
         }
 
         public override bool Equals(object? obj) => Equals(obj as MapMethodModel);
@@ -74,6 +114,9 @@ namespace CustomMapper.SourceGenerator.Generator
                 hash = (hash * 397) ^ DestinationTypeGlobal.GetHashCode();
                 hash = (hash * 397) ^ HasExtendMap.GetHashCode();
                 hash = (hash * 397) ^ Assignments.GetHashCode();
+                hash = (hash * 397) ^ UseConstructor.GetHashCode();
+                hash = (hash * 397) ^ CtorBindings.GetHashCode();
+                hash = (hash * 397) ^ PostCtorAssignments.GetHashCode();
                 return hash;
             }
         }

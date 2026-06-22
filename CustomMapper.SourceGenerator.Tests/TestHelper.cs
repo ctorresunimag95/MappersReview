@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using CustomMapper.SourceGenerator.Generator;
 using CustomMapper.SourceGenerator.Runtime;
 using Microsoft.CodeAnalysis;
@@ -8,6 +9,12 @@ namespace CustomMapper.SourceGenerator.Tests;
 public static class TestHelper
 {
     public static Dictionary<string, string> RunGenerator(string source)
+    {
+        var (files, _) = RunGeneratorWithDiagnostics(source);
+        return files;
+    }
+
+    public static (Dictionary<string, string> Files, ImmutableArray<Diagnostic> Diagnostics) RunGeneratorWithDiagnostics(string source)
     {
         SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(source);
 
@@ -27,11 +34,15 @@ public static class TestHelper
         GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
         driver = driver.RunGenerators(compilation);
 
-        return driver
-            .GetRunResult()
+        var runResult = driver.GetRunResult();
+        var files = runResult
             .GeneratedTrees
             .ToDictionary(
                 t => Path.GetFileName(t.FilePath),
                 t => t.GetText().ToString());
+
+        var allDiagnostics = runResult.Diagnostics;
+
+        return (files, allDiagnostics);
     }
 }

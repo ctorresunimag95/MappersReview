@@ -101,13 +101,85 @@ namespace CustomMapper.SourceGenerator.Generator
         {
             sb.AppendLine($"public partial {method.DestinationTypeGlobal} {method.MethodName}({method.SourceTypeGlobal} source)");
             sb.OpenBrace();
+
+            if (method.UseConstructor)
+                EmitConstructorMode(sb, method);
+            else if (method.Assignments.AsImmutableArray().Any(a => a.IsInitOnly))
+                EmitObjectInitializerMode(sb, method);
+            else
+                EmitRegularMode(sb, method);
+
+            sb.CloseBrace();
+        }
+
+        private static void EmitRegularMode(SourceBuilder sb, MapMethodModel method)
+        {
             sb.AppendLine($"var destination = new {method.DestinationTypeGlobal}();");
             foreach (var a in method.Assignments.AsImmutableArray())
                 sb.AppendLine($"destination.{a.DestinationProperty} = source.{a.SourceProperty};");
             if (method.HasExtendMap)
                 sb.AppendLine($"{ExtendMapMethodName}(source, destination);");
             sb.AppendLine("return destination;");
-            sb.CloseBrace();
+        }
+
+        private static void EmitObjectInitializerMode(SourceBuilder sb, MapMethodModel method)
+        {
+            var allAssignments = method.Assignments.AsImmutableArray();
+
+            if (allAssignments.IsEmpty)
+            {
+                sb.AppendLine($"var destination = new {method.DestinationTypeGlobal}();");
+                if (method.HasExtendMap)
+                    sb.AppendLine($"{ExtendMapMethodName}(source, destination);");
+                sb.AppendLine("return destination;");
+                return;
+            }
+
+            sb.AppendLine($"var destination = new {method.DestinationTypeGlobal}");
+            sb.OpenBrace();
+
+            for (int i = 0; i < allAssignments.Length; i++)
+            {
+                var a = allAssignments[i];
+                bool isLast = i == (allAssignments.Length - 1);
+                string comma = isLast ? "" : ",";
+                sb.AppendLine($"{a.DestinationProperty} = source.{a.SourceProperty}{comma}");
+            }
+
+            sb.CloseBraceWithSemicolon();
+
+            if (method.HasExtendMap)
+                sb.AppendLine($"{ExtendMapMethodName}(source, destination);");
+            sb.AppendLine("return destination;");
+        }
+
+        private static void EmitConstructorMode(SourceBuilder sb, MapMethodModel method)
+        {
+            var ctorBindings = method.CtorBindings.AsImmutableArray();
+            var postAssignments = method.PostCtorAssignments.AsImmutableArray();
+
+            if (ctorBindings.IsEmpty)
+            {
+                sb.AppendLine($"var destination = new {method.DestinationTypeGlobal}();");
+            }
+            else
+            {
+                sb.AppendLine($"var destination = new {method.DestinationTypeGlobal}(");
+                for (int i = 0; i < ctorBindings.Length; i++)
+                {
+                    var b = ctorBindings[i];
+                    bool isLast = i == (ctorBindings.Length - 1);
+                    string suffix = isLast ? ");" : ",";
+                    sb.AppendLine($"{b.ParameterName}: source.{b.SourceProperty}{suffix}");
+                }
+            }
+
+            foreach (var a in postAssignments)
+                sb.AppendLine($"destination.{a.DestinationProperty} = source.{a.SourceProperty};");
+
+            if (method.HasExtendMap)
+                sb.AppendLine($"{ExtendMapMethodName}(source, destination);");
+            sb.AppendLine("return destination;");
         }
 
         private static void EmitInterfaceShims(SourceBuilder sb, MapperClassModel model)

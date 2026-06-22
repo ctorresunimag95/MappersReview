@@ -43,6 +43,13 @@ namespace CustomMapper.SourceGenerator.Generator
             return this;
         }
 
+        public SourceBuilder CloseBraceWithSemicolon()
+        {
+            _indent--;
+            AppendLine("};");
+            return this;
+        }
+
         public override string ToString() => _sb.ToString();
     }
 }

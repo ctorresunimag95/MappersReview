@@ -24,3 +24,18 @@ public partial class CustomerMapper
         destination.DisplayName = $"{source.FirstName} {source.LastName}";
     }
 }
+
+[Mapper]
+public partial class OrderLineMapper
+{
+    // Mode (b): demonstrates automatic object-initializer mode for init-only properties.
+    public partial OrderLineDto MapOrderLine(OrderLine source);
+}
+
+[Mapper]
+public partial class AddressMapper
+{
+    // Mode (c): demonstrates constructor mapping with named arguments.
+    [UseConstructor]
+    public partial AddressDto MapAddress(Address source);
+}

@@ -37,5 +37,21 @@ namespace CustomMapper.SourceGenerator.Generator
             category: Category,
             defaultSeverity: DiagnosticSeverity.Warning,
             isEnabledByDefault: true);
+
+        public static readonly DiagnosticDescriptor ConstructorParameterUnmatched = new(
+            id: "CMSG005",
+            title: "Constructor parameter cannot be mapped from source",
+            messageFormat: "Destination '{0}': constructor parameter '{1}' (type '{2}') has no matching source property by name and type; it will receive its default value or cause a compile error",
+            category: Category,
+            defaultSeverity: DiagnosticSeverity.Warning,
+            isEnabledByDefault: true);
+
+        public static readonly DiagnosticDescriptor InitOnlyNotCoveredByConstructor = new(
+            id: "CMSG006",
+            title: "Init-only property not covered by constructor mapping",
+            messageFormat: "Destination '{0}.{1}' is init-only but was not matched to a constructor parameter; it cannot be assigned and will keep its default value",
+            category: Category,
+            defaultSeverity: DiagnosticSeverity.Warning,
+            isEnabledByDefault: true);
     }
 }

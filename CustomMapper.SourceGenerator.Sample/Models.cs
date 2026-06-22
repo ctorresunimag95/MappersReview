@@ -21,3 +21,36 @@ public class CustomerDto
 
     public override string ToString() => $"{Id}: {DisplayName} <{Email}>";
 }
+
+public class OrderLine
+{
+    public int ProductId { get; set; }
+    public decimal UnitPrice { get; set; }
+}
+
+public class OrderLineDto
+{
+    public int ProductId { get; init; }
+    public decimal UnitPrice { get; init; }
+}
+
+public class Address
+{
+    public string Street { get; set; } = "";
+    public string City { get; set; } = "";
+    public string Zip { get; set; } = "";
+}
+
+public class AddressDto
+{
+    public AddressDto(string street, string city, string zip)
+    {
+        Street = street;
+        City = city;
+        Zip = zip;
+    }
+
+    public string Street { get; }
+    public string City { get; }
+    public string Zip { get; }
+}
