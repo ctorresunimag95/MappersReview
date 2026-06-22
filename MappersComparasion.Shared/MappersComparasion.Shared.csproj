@@ -12,4 +12,8 @@
     <PackageReference Include="Facet" Version="6.6.8-preview.pr389.92" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CustomMapper.SourceGenerator\CustomMapper.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+  </ItemGroup>
+
 </Project>

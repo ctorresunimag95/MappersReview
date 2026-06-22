@@ -12,6 +12,7 @@ public class MapperBenchmarks
     private List<User> _users = null!;
     private MapperlyUserMapper _mapperly = null!;
     private IMapper _autoMapper = null!;
+    private CustomSourceGeneratorUserMapper _customSourceGenerator = null!;
 
     [Params(1, 100, 1000)]
     public int Count { get; set; }
@@ -29,6 +30,7 @@ public class MapperBenchmarks
         }).ToList();
 
         _mapperly = new MapperlyUserMapper();
+        _customSourceGenerator = new CustomSourceGeneratorUserMapper();
 
         TypeAdapterConfig<User, UserDto>.NewConfig()
             .Map(d => d.City, s => s.Address.City);
@@ -55,4 +57,8 @@ public class MapperBenchmarks
     [Benchmark]
     public List<FacetUserDto> Facet()
         => _users.Select(u => new FacetUserDto(u)).ToList();
+
+    [Benchmark]
+    public List<UserDto> CustomSourceGenerator()
+        => _users.Select(_customSourceGenerator.Map).ToList();
 }
