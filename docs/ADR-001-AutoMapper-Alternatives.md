@@ -103,29 +103,38 @@ However, AutoMapper has recently announced a transition toward a **commercial/pa
 
 ## Decision Outcome
 
-**Primary recommendation: CustomSourceGenerator (in-house source generator).**  
-**Secondary recommendation (external library): Mapperly.**
+Two distinct migration paths apply depending on whether the service already uses AutoMapper or is being built from scratch.
 
-### Why CustomSourceGenerator
+---
 
-The benchmark data reveals that CustomSourceGenerator achieves **0.77× performance at 100 objects and 1.01× at 1,000 objects** — exceeding the manual baseline at scale while requiring zero handwritten mapping code. This combines the performance and ownership guarantees of the Manual approach with the code-generation ergonomics of Mapperly, without external dependency or startup overhead.
+### Path A — Existing projects migrating from AutoMapper
 
-The `[Mapper]` attribute pattern is intuitive; developers write the method signature and type, and the generator produces the implementation. The optional `ExtendMap` hook provides flexibility for non-trivial flattening or computed fields. Generated code is readable and debuggable as ordinary C#. Registration follows the same `AddMappers<TAssemblyMarker>()` pattern, keeping the surface familiar to teams migrating from AutoMapper.
+**Primary: CustomSourceGenerator → Fallback: Mapperly**
 
-**This approach is recommended for new projects and teams willing to maintain an in-house code generator.**
+Services currently on AutoMapper should migrate to **CustomSourceGenerator** first. The `[Mapper]` attribute pattern requires minimal onboarding change: developers write the method signature, the generator produces the implementation, and the `AddMappers<TAssemblyMarker>()` DI registration replaces `AddAutoMapper(...)` with a single line change. Generated code is readable, debuggable, and free of external runtime dependencies — addressing both the licensing concern and the performance gap directly.
 
-### Alternative: Mapperly (External Library)
+If the team is unable or unwilling to take a dependency on the in-house source generator infrastructure (e.g., limited Roslyn tooling support, shared-service constraints), **Mapperly** is the fallback. It provides an identical compile-time approach, mature external support, and compile-time mapping validation, at a modest performance cost (0.89× vs 0.77× at 100 objects).
 
-For teams preferring a mature, externally-supported third-party tool, **Mapperly** is the strongest candidate:
+| Priority | Choice | Rationale |
+|----------|--------|-----------|
+| 1st | **CustomSourceGenerator** | Fastest at scale, zero runtime dependency, full ownership, drops AutoMapper license concern |
+| 2nd | **Mapperly** | Mature external alternative when custom generator infrastructure is not available |
 
-- **Performance at 100 objects: 0.89×** (tied for best among external libraries)
-- **Performance at 1,000 objects: 1.17×** (second-best, ahead of Mapster and AutoMapper)
-- Compile-time source generation with full IDE support
-- Compile-time validation of all mappings
-- Well-maintained by the open-source community
-- Reduces mapping maintenance burden vs. manual code
+---
 
-**This option is recommended for teams seeking proven external tooling over custom infrastructure.**
+### Path B — New projects
+
+**Primary: Manual mapping → Fallback: CustomSourceGenerator or Mapperly**
+
+For greenfield services, **manual mapping** is the default starting point. It has no external dependencies, no build-time tooling requirements, predictable performance, and zero setup cost. Each mapping is a plain, testable C# class behind `IMapperProfile<TSource, TDestination>` — fully debuggable and refactor-friendly from day one.
+
+As the mapping surface grows and handwriting burden becomes a concern, teams should escalate to **CustomSourceGenerator** (preferred) or **Mapperly** (external alternative) without changing the calling interface.
+
+| Priority | Choice | Rationale |
+|----------|--------|-----------|
+| 1st | **Manual mapping** | No tooling dependencies, transparent code, minimal setup for new services |
+| 2nd | **CustomSourceGenerator** | When boilerplate becomes a burden and the team can maintain the generator |
+| 3rd | **Mapperly** | When external tooling is preferred over an in-house generator |
 
 ### For Collection Mapping
 
