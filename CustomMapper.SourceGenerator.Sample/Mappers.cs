@@ -18,6 +18,11 @@ public partial class CustomerMapper
     // then ExtendMap is invoked before the destination is returned.
     public partial CustomerDto Map(Customer source);
 
+    private static void ConfigureMapper(MapperConfig config)
+    {
+        config.Ignore<CustomerDto>(nameof(CustomerDto.DisplayName));
+    }
+
     private void ExtendMap(Customer source, CustomerDto destination)
     {
         _auditService.Log($"Mapped customer {source.Id}");

@@ -16,7 +16,7 @@ public class CustomerDto
     public string LastName { get; set; } = "";
     public string Email { get; set; } = "";
 
-    // Not present on the source — filled in by ExtendMap (expect a CMSG003 warning for this property).
+    // Not present on the source — explicitly ignored for auto-mapping and filled in by ExtendMap.
     public string DisplayName { get; set; } = "";
 
     public override string ToString() => $"{Id}: {DisplayName} <{Email}>";

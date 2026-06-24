@@ -197,4 +197,158 @@ public class MapperSnapshotTests
         var (_, diagnostics) = TestHelper.RunGeneratorWithDiagnostics(source);
         Assert.DoesNotContain(diagnostics, d => d.Id == "CS8852");
     }
+
+    [Fact]
+    public void MapperIgnore_attribute_skips_assignment()
+    {
+        const string source = """
+            using CustomMapper.SourceGenerator.Runtime;
+            namespace T {
+                [Mapper]
+                [MapperIgnore(typeof(Dst), nameof(Dst.Extra))]
+                public partial class M {
+                    public partial Dst Map(Src s);
+                }
+                public class Src { public int Id { get; set; } public string Extra { get; set; } }
+                public class Dst { public int Id { get; set; } public string Extra { get; set; } }
+            }
+            """;
+
+        var files = TestHelper.RunGenerator(source);
+        var impl = files["T.M.g.cs"];
+
+        Assert.Contains("destination.Id = source.Id;", impl);
+        Assert.DoesNotContain("destination.Extra = source.Extra;", impl);
+    }
+
+    [Fact]
+    public void MapperIgnore_attribute_suppresses_CMSG003()
+    {
+        const string source = """
+            using CustomMapper.SourceGenerator.Runtime;
+            namespace T {
+                [Mapper]
+                [MapperIgnore(typeof(Dst), nameof(Dst.Extra))]
+                public partial class M {
+                    public partial Dst Map(Src s);
+                }
+                public class Src { public int Id { get; set; } }
+                public class Dst { public int Id { get; set; } public string Extra { get; set; } }
+            }
+            """;
+
+        var (_, diagnostics) = TestHelper.RunGeneratorWithDiagnostics(source);
+        Assert.DoesNotContain(diagnostics, d => d.Id == "CMSG003" && d.GetMessage().Contains("Extra"));
+    }
+
+    [Fact]
+    public void ConfigureMapper_ignore_skips_assignment()
+    {
+        const string source = """
+            using CustomMapper.SourceGenerator.Runtime;
+            namespace T {
+                [Mapper]
+                public partial class M {
+                    public partial Dst Map(Src s);
+
+                    private void ConfigureMapper(MapperConfig config)
+                    {
+                        config.Ignore<Dst>(nameof(Dst.Extra));
+                    }
+                }
+                public class Src { public int Id { get; set; } public string Extra { get; set; } }
+                public class Dst { public int Id { get; set; } public string Extra { get; set; } }
+            }
+            """;
+
+        var files = TestHelper.RunGenerator(source);
+        var impl = files["T.M.g.cs"];
+
+        Assert.Contains("destination.Id = source.Id;", impl);
+        Assert.DoesNotContain("destination.Extra = source.Extra;", impl);
+    }
+
+    [Fact]
+    public void ConfigureMapper_ignore_suppresses_CMSG003()
+    {
+        const string source = """
+            using CustomMapper.SourceGenerator.Runtime;
+            namespace T {
+                [Mapper]
+                public partial class M {
+                    public partial Dst Map(Src s);
+
+                    private void ConfigureMapper(MapperConfig config)
+                    {
+                        config.Ignore<Dst>(nameof(Dst.Extra));
+                    }
+                }
+                public class Src { public int Id { get; set; } }
+                public class Dst { public int Id { get; set; } public string Extra { get; set; } }
+            }
+            """;
+
+        var (_, diagnostics) = TestHelper.RunGeneratorWithDiagnostics(source);
+        Assert.DoesNotContain(diagnostics, d => d.Id == "CMSG003" && d.GetMessage().Contains("Extra"));
+    }
+
+    [Fact]
+    public void ConfigureMapper_ignore_suppresses_CMSG006_for_constructor_mode()
+    {
+        const string source = """
+            using CustomMapper.SourceGenerator.Runtime;
+            namespace T {
+                [Mapper]
+                public partial class M {
+                    [UseConstructor] public partial Dst Map(Src s);
+
+                    private void ConfigureMapper(MapperConfig config)
+                    {
+                        config.Ignore<Dst>(nameof(Dst.Extra));
+                    }
+                }
+                public class Src { public int Id { get; set; } }
+                public class Dst {
+                    public Dst(int id) { Id = id; }
+                    public int Id { get; }
+                    public string Extra { get; init; }
+                }
+            }
+            """;
+
+        var (_, diagnostics) = TestHelper.RunGeneratorWithDiagnostics(source);
+        Assert.DoesNotContain(diagnostics, d => d.Id == "CMSG006" && d.GetMessage().Contains("Extra"));
+    }
+
+    [Fact]
+    public void MapperIgnore_and_ConfigureMapper_merge_by_destination_type()
+    {
+        const string source = """
+            using CustomMapper.SourceGenerator.Runtime;
+            namespace T {
+                [Mapper]
+                [MapperIgnore(typeof(OrderDto), nameof(OrderDto.InternalNote))]
+                public partial class M {
+                    public partial CustomerDto MapCustomer(Customer s);
+                    public partial OrderDto MapOrder(Order s);
+
+                    private void ConfigureMapper(MapperConfig config)
+                    {
+                        config.Ignore<CustomerDto>(nameof(CustomerDto.DisplayName));
+                    }
+                }
+                public class Customer { public int Id { get; set; } public string DisplayName { get; set; } }
+                public class CustomerDto { public int Id { get; set; } public string DisplayName { get; set; } }
+                public class Order { public int Id { get; set; } public string InternalNote { get; set; } }
+                public class OrderDto { public int Id { get; set; } public string InternalNote { get; set; } }
+            }
+            """;
+
+        var files = TestHelper.RunGenerator(source);
+        var impl = files["T.M.g.cs"];
+
+        Assert.Contains("destination.Id = source.Id;", impl);
+        Assert.DoesNotContain("destination.DisplayName = source.DisplayName;", impl);
+        Assert.DoesNotContain("destination.InternalNote = source.InternalNote;", impl);
+    }
 }
