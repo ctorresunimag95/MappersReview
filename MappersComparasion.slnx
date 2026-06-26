@@ -2,6 +2,7 @@
   <Project Path="MappersComparasion.Shared/MappersComparasion.Shared.csproj" />
   <Project Path="MappersComparasion/MappersComparasion.csproj" />
   <Project Path="CustomMapper/CustomMapper.csproj" />
+  <Project Path="CustomMapper.Tests/CustomMapper.Tests.csproj" />
   <Project Path="MappersComparasion.DI/MappersComparasion.DI.csproj" />
   <Project Path="CustomMapper.SourceGenerator.Tests/CustomMapper.SourceGenerator.Tests.csproj" />
   <Project Path="CustomMapper.SourceGenerator/CustomMapper.SourceGenerator.csproj" />
