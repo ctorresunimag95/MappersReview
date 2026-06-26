@@ -15,6 +15,11 @@ public static class MapperServiceCollection
     /// <param name="services">The service collection to which the mapping profiles and mapper service will be added.</param>
     /// <param name="serviceLifetime">The lifetime of the mapping profile services.</param>
     /// <returns>The updated service collection.</returns>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddMappers&lt;Program&gt;(); // scans the assembly of the marker type
+    /// </code>
+    /// </example>
     public static IServiceCollection AddMappers<TAssemblyMarker>(this IServiceCollection services,
         ServiceLifetime serviceLifetime = ServiceLifetime.Scoped)
         => services.AddMappers([typeof(TAssemblyMarker)], serviceLifetime);
@@ -26,6 +31,11 @@ public static class MapperServiceCollection
     /// <param name="assemblyMarkers">The types used to locate the assemblies containing the mapping profiles.</param>
     /// <param name="serviceLifetime">The lifetime of the mapping profile services.</param>
     /// <returns>The updated service collection.</returns>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddMappers(new[] { typeof(Program), typeof(AnotherMarker) }); // scans the assemblies of the marker types
+    /// </code>
+    /// </example>
     public static IServiceCollection AddMappers(this IServiceCollection services,
         IEnumerable<Type> assemblyMarkers,
         ServiceLifetime serviceLifetime = ServiceLifetime.Scoped)
