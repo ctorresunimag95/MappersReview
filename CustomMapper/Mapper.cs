@@ -16,6 +16,16 @@ public interface IMapper
     /// <param name="source">The source object to map.</param>
     /// <returns>The mapped destination object.</returns>
     TDestination Map<TSource, TDestination>(TSource source);
+
+    /// <summary>
+    /// Maps the source object to the destination object asynchronously.
+    /// </summary>
+    /// <typeparam name="TSource">The type of the source object.</typeparam>
+    /// <typeparam name="TDestination">The type of the destination object.</typeparam>
+    /// <param name="source">The source object to map.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A task representing the mapped destination object.</returns>
+    Task<TDestination> MapAsync<TSource, TDestination>(TSource source, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -43,5 +53,21 @@ public class Mapper : IMapper
         var mapper = scope.ServiceProvider.GetRequiredService<IMapperProfile<TSource, TDestination>>();
 
         return mapper.Map(source);
+    }
+
+    /// <summary>
+    /// Maps the source object to the destination object using the appropriate async mapping profile registered in the service provider.
+    /// </summary>
+    /// <typeparam name="TSource">The type of the source object.</typeparam>
+    /// <typeparam name="TDestination">The type of the destination object.</typeparam>
+    /// <param name="source">The source object to map.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A task representing the mapped destination object.</returns>
+    public async Task<TDestination> MapAsync<TSource, TDestination>(TSource source, CancellationToken cancellationToken = default)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var mapper = scope.ServiceProvider.GetRequiredService<IAsyncMapperProfile<TSource, TDestination>>();
+
+        return await mapper.MapAsync(source, cancellationToken);
     }
 }

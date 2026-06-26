@@ -26,6 +26,9 @@ public static class MapperServiceCollection
             {
                 if (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMapperProfile<,>))
                     services.Add(new ServiceDescriptor(i, type, serviceLifetime));
+
+                if (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAsyncMapperProfile<,>))
+                    services.Add(new ServiceDescriptor(i, type, serviceLifetime));
             }
         }
 
