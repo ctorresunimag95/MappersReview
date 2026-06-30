@@ -49,8 +49,8 @@ public class Mapper : IMapper
     /// <returns>The mapped destination object.</returns>
     public TDestination Map<TSource, TDestination>(TSource source)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var mapper = scope.ServiceProvider.GetRequiredService<IMapperProfile<TSource, TDestination>>();
+        ArgumentNullException.ThrowIfNull(source);
+        var mapper = _serviceProvider.GetRequiredService<IMapperProfile<TSource, TDestination>>();
 
         return mapper.Map(source);
     }
@@ -65,8 +65,8 @@ public class Mapper : IMapper
     /// <returns>A task representing the mapped destination object.</returns>
     public async Task<TDestination> MapAsync<TSource, TDestination>(TSource source, CancellationToken cancellationToken = default)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var mapper = scope.ServiceProvider.GetRequiredService<IAsyncMapperProfile<TSource, TDestination>>();
+        ArgumentNullException.ThrowIfNull(source);
+        var mapper = _serviceProvider.GetRequiredService<IAsyncMapperProfile<TSource, TDestination>>();
 
         return await mapper.MapAsync(source, cancellationToken);
     }

@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace CustomMapper;
 
@@ -49,15 +50,21 @@ public static class MapperServiceCollection
 
             foreach (var i in type.GetInterfaces())
             {
-                if (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMapperProfile<,>))
-                    services.Add(new ServiceDescriptor(i, type, serviceLifetime));
+                if (!i.IsGenericType)
+                    continue;
 
-                if (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAsyncMapperProfile<,>))
-                    services.Add(new ServiceDescriptor(i, type, serviceLifetime));
+                var definition = i.GetGenericTypeDefinition();
+                if (definition != typeof(IMapperProfile<,>) && definition != typeof(IAsyncMapperProfile<,>))
+                    continue;
+
+                if (services.Any(d => d.ServiceType == i && d.ImplementationType == type))
+                    continue;
+
+                services.Add(new ServiceDescriptor(i, type, serviceLifetime));
             }
         }
 
-        services.AddTransient<IMapper, Mapper>();
+        services.TryAddTransient<IMapper, Mapper>();
 
         return services;
     }
